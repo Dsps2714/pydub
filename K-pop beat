@@ -1,0 +1,41 @@
+from pydub.generators import Sine
+from pydub import AudioSegment
+import random
+
+# Duration of one beat at 120 BPM (500 ms)
+beat_duration_ms = 500
+
+# Define percussion sounds
+kick = Sine(60).to_audio_segment(duration=100).fade_out(50) - 3
+snare = Sine(300).to_audio_segment(duration=50).fade_out(25) - 1
+hat = Sine(800).to_audio_segment(duration=30).fade_out(10) - 8
+
+# One bar (4 beats)
+def make_bar():
+    bar = AudioSegment.silent(duration=0)
+    for i in range(4):
+        if i % 2 == 0:
+            bar += kick + AudioSegment.silent(duration=beat_duration_ms - 100)
+        else:
+            bar += snare + AudioSegment.silent(duration=beat_duration_ms - 50)
+    return bar
+
+# Melody bar
+def make_melody_bar():
+    melody = AudioSegment.silent(duration=0)
+    notes = [440, 494, 523, 587]  # A4, B4, C5, D5
+    for _ in range(4):
+        freq = random.choice(notes)
+        tone = Sine(freq).to_audio_segment(duration=beat_duration_ms).fade_out(50) - 10
+        melody += tone
+    return melody
+
+# Build full track (~2 minutes = 60 bars)
+full_track = AudioSegment.silent(duration=0)
+for i in range(60):
+    beat_bar = make_bar()
+    melody_bar = make_melody_bar() if i >= 4 else AudioSegment.silent(duration=2000)
+    full_track += beat_bar.overlay(melody_bar)
+
+# Export to WAV file
+full_track.export("kpop_beat_2_min.wav", format="wav")
